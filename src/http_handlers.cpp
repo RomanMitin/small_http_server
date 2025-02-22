@@ -4,6 +4,7 @@
 
 #include <userver/components/component_context.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
+#include <userver/utils/async.hpp>
 
 #include "request_handler.hpp"
 
@@ -29,7 +30,7 @@ class HttpHandlerGet final : public userver::server::handlers::HttpHandlerBase {
       userver::server::request::RequestContext&) const override {
     assert(request.GetMethod() == HttpMethod::kGet);
 
-    return _handler.handle_request(request_type::get, request.GetArg("key"));
+    return userver::utils::Async("Get handler", [&] { return _handler.handle_request(request_type::get, request.GetArg("key")); }).Get();
   }
 
   RequestHandler& _handler;
@@ -53,8 +54,8 @@ class HttpHandlerPost final
       userver::server::request::RequestContext&) const override {
     assert(request.GetMethod() == HttpMethod::kPost);
 
-    return _handler.handle_request(request_type::insert, request.GetArg("key"),
-                                   request.GetArg("value"));
+    return userver::utils::Async("Insert handler", [&] {return _handler.handle_request(request_type::insert, request.GetArg("key"),
+                                   request.GetArg("value") ); }).Get();
   }
 
   RequestHandler& _handler;

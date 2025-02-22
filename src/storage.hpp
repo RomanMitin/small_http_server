@@ -1,12 +1,12 @@
 #pragma once
 #include <optional>
-#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <userver/engine/shared_mutex.hpp>
 
 class Storage {
-  mutable std::shared_mutex mtx;
+  mutable userver::engine::SharedMutex mtx;
   std::unordered_map<std::string, std::string> _data;
 
  public:
