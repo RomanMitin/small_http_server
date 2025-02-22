@@ -14,8 +14,8 @@ void HelloBenchmark(benchmark::State& state) {
 
     for (auto _ : state) {
       const auto name = kNames[i++ % std::size(kNames)];
-      auto result = small_http_server::SayHelloTo(name);
-      benchmark::DoNotOptimize(result);
+      // auto result = small_http_server::SayHelloTo(name);
+      // benchmark::DoNotOptimize(result);
     }
   });
 }

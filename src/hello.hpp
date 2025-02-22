@@ -7,8 +7,6 @@
 
 namespace small_http_server {
 
-std::string SayHelloTo(std::string_view name);
+void AppendHttpHandler(userver::components::ComponentList& component_list);
 
-void AppendHello(userver::components::ComponentList &component_list);
-
-} // namespace small_http_server
+}  // namespace small_http_server
