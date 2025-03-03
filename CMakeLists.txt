@@ -19,7 +19,6 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/http_handlers.cpp
     src/storage.cpp
     src/storage.hpp
-    src/request_handler.hpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
 
