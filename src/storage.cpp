@@ -1,22 +1,17 @@
+#include "storage.hpp"
 #include <mutex>
 
-#include "storage.hpp"
-
-void storage::AppendKeyValueStorageComponent(userver::components::ComponentList& component_list) {
-  component_list.Append<KeyValueStorage>();
-}
-
-void storage::KeyValueStorage::insert(const std::string& key,
+void Storage::insert_element(const std::string& key,
                              const std::string& element) {
-  std::unique_lock lock(mutex_);
-  storage_[key] = element;
+  std::unique_lock lk(mtx);
+  _data[key] = element;
 }
 
-std::optional<std::string> storage::KeyValueStorage::get(const std::string& key) const {
-  std::shared_lock lock(mutex_);
+std::optional<std::string> Storage::get(const std::string& key) const {
+  std::shared_lock lk(mtx);
 
-  auto it = storage_.find(key);
-  if (it == storage_.end()) {
+  auto it = _data.find(key);
+  if (it == _data.end()) {
     return {};
   }
 
