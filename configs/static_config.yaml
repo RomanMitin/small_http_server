@@ -1,3 +1,5 @@
+config_vars: ../configs/config_vars.yaml
+
 components_manager:
     static_config_validation:
         validate_all_components: false

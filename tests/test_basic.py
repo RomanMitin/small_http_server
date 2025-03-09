@@ -4,4 +4,3 @@ async def test_basic(service_client):
     assert response.status == 200
     response = await service_client.get('/get', params={'name': 'Tester'})
     assert response.status == 200
-
