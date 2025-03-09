@@ -1,14 +1,16 @@
+#include "http_handlers.hpp"
+
 #include <fmt/format.h>
 
 #include <userver/components/component_context.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/utils/async.hpp>
-#include <userver/http/status_code.hpp>
 
-#include "storage.hpp"
-#include "http_handlers.hpp"
+#include "request_handler.hpp"
 
 namespace small_http_server {
+
+namespace {
 
 using namespace userver::v2_8_rc::server::http;
 
@@ -19,32 +21,19 @@ class HttpHandlerGet final : public userver::server::handlers::HttpHandlerBase {
   HttpHandlerGet(const userver::components::ComponentConfig& config,
                  const userver::components::ComponentContext& component_context)
       : HttpHandlerBase(config, component_context),
-      storage_(component_context.FindComponent<storage::KeyValueStorage>()) {}
+        _handler(component_context.FindComponent<RequestHandler>()) {}
 
   using HttpHandlerBase::HttpHandlerBase;
 
-  std::string HandleRequest(
-      userver::server::http::HttpRequest& request,
+  std::string HandleRequestThrow(
+      const userver::server::http::HttpRequest& request,
       userver::server::request::RequestContext&) const override {
+    assert(request.GetMethod() == HttpMethod::kGet);
 
-      auto& key = request.GetArg("key");
-      auto& response = request.GetHttpResponse();
-
-      if (key.empty()) {
-        response.SetStatus(userver::server::http::HttpStatus::kBadRequest);
-        return fmt::format("Key must be provided\n");
-      }
-
-      auto res = storage_.get(key);
-      if (!res.has_value()) {
-        response.SetStatus(userver::server::http::HttpStatus::kNotFound);
-        return fmt::format("Key {} not found\n", key);
-      }
-
-      return fmt::format("Value for key {}: {}\n", key, res.value());
+    return userver::utils::Async("Get handler", [&] { return _handler.handle_request(request_type::get, request.GetArg("key")); }).Get();
   }
 
-  storage::KeyValueStorage& storage_;
+  RequestHandler& _handler;
 };
 
 class HttpHandlerPost final
@@ -56,39 +45,27 @@ class HttpHandlerPost final
       const userver::components::ComponentConfig& config,
       const userver::components::ComponentContext& component_context)
       : HttpHandlerBase(config, component_context),
-        storage_(component_context.FindComponent<storage::KeyValueStorage>()) {}
+        _handler(component_context.FindComponent<RequestHandler>()) {}
 
   using HttpHandlerBase::HttpHandlerBase;
 
-  std::string HandleRequest(
-      userver::server::http::HttpRequest& request,
+  std::string HandleRequestThrow(
+      const userver::server::http::HttpRequest& request,
       userver::server::request::RequestContext&) const override {
-      
-      auto& key = request.GetArg("key");
-      auto& value = request.GetArg("value");
+    assert(request.GetMethod() == HttpMethod::kPost);
 
-      auto& response = request.GetHttpResponse();
-
-      if (key.empty()) {
-        response.SetStatus(userver::server::http::HttpStatus::kBadRequest);
-        return fmt::format("Key must be provided\n");
-      }
-
-      if (value.empty()) {
-        response.SetStatus(userver::server::http::HttpStatus::kBadRequest);
-        return fmt::format("Value must be provided\n");
-      }
-
-      storage_.insert(key, value);
-      return fmt::format("Stored Key: {} with Value: {}\n", key, value);
+    return userver::utils::Async("Insert handler", [&] {return _handler.handle_request(request_type::insert, request.GetArg("key"),
+                                   request.GetArg("value") ); }).Get();
   }
 
-  storage::KeyValueStorage& storage_;
+  RequestHandler& _handler;
 };
 
+}  // namespace
+
 void AppendHttpHandler(userver::components::ComponentList& component_list) {
-  component_list.Append<HttpHandlerGet>()
-                .Append<HttpHandlerPost>();
+  component_list.Append<HttpHandlerGet>();
+  component_list.Append<HttpHandlerPost>();
 }
 
 }  // namespace small_http_server
